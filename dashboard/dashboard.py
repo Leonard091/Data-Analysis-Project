@@ -1,125 +1,168 @@
-# Import Library
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
 
-# ==============================
-# LOAD DATA
-# ==============================
+# Page configuration
+st.set_page_config(page_title="Bike Share Dashboard", layout="wide")
 
 
-@st.cache_resource
-def load_data():
-    data = pd.read_csv("./hour.csv")
+# Function load_data
+@st.cache_data
+def load_data(file_name):
+    data = pd.read_csv(file_name)
     return data
 
 
-data = load_data()
+# Data load
+day_data = load_data("./day.csv")
+hour_data = load_data("./hour.csv")
 
 
-# ==============================
-# TITLE DASHBOARD
-# ==============================
-# Set page title
+# Header
 st.title("Bike Share Dashboard")
 
-# ==============================
-# SIDEBAR
-# ==============================
-st.sidebar.title("Information:")
-st.sidebar.markdown("**• Nama: Maulana Kavaldo**")
-st.sidebar.markdown(
-    "**• Email: [alkav.maulana@gmail.com](alkav.maulana@gmail.com)**")
-st.sidebar.markdown(
-    "**• Dicoding: [maulanakavaldo](https://www.dicoding.com/users/maulanakavaldo/)**")
-st.sidebar.markdown(
-    "**• LinkedIn: [Maulana Kavaldo](https://www.linkedin.com/in/maulana-kavaldo/)**")
-st.sidebar.markdown(
-    "**• Github: [maulanakavaldo](https://maulanakavaldo.github.io/)**")
+# Sidebar
+st.sidebar.title("About")
+st.sidebar.markdown("**• Nama: Leonardo Alfontus Mende Sirait**")
+st.sidebar.markdown("**• Email: leonardosirait80@gmail.com**")
+st.sidebar.markdown("**• Bangkit ID: M119D4KY3013**")
+st.sidebar.markdown("**• Dicoding: [leonard80](https://www.dicoding.com/users/leonard80/)**")
 
-
-st.sidebar.title("Dataset Bike Share")
-# Show the dataset
-if st.sidebar.checkbox("Show Dataset"):
+# Show the datasets
+st.sidebar.title("Bike Share Datasets")
+if st.sidebar.checkbox("Show Dataset day.csv"):
     st.subheader("Raw Data")
-    st.write(data)
+    st.write(day_data)
+
+if st.sidebar.checkbox("Show Dataset hour.csv"):
+    st.subheader("Raw Data")
+    st.write(hour_data)
 
 # Display summary statistics
-if st.sidebar.checkbox("Show Summary Statistics"):
+if st.sidebar.checkbox("Show Summary day.csv Statistics"):
     st.subheader("Summary Statistics")
-    st.write(data.describe())
+    st.write(day_data.describe())
 
-# Show dataset source
-st.sidebar.markdown("[Download Dataset](https://link-to-your-dataset)")
-
-st.sidebar.markdown('**Weather:**')
-st.sidebar.markdown('1: Clear, Few clouds, Partly cloudy, Partly cloudy')
-st.sidebar.markdown('2: Mist + Cloudy, Mist + Broken clouds, Mist + Few clouds, Mist')
-st.sidebar.markdown('3: Light Snow, Light Rain + Thunderstorm + Scattered clouds, Light Rain + Scattered clouds')
-st.sidebar.markdown('4: Heavy Rain + Ice Pallets + Thunderstorm + Mist, Snow + Fog')
+# Display summary statistics
+if st.sidebar.checkbox("Show Summary hour.csv Statistics"):
+    st.subheader("Summary Statistics")
+    st.write(hour_data.describe())
 
 
-# ==============================
-# VISUALIZATION
-# ==============================
 
-# create a layout with two columns
-col1, col2 = st.columns(2)
+# Main page
+col1, col2 = st.columns([5, 1])
 
 with col1:
-    # Season-wise bike share count
-    # st.subheader("Season-wise Bike Share Count")
+    st.subheader("Daily Bike Rentals by Season and Weather Condition")
 
-    # Mapping dari angka ke label musim
-    season_mapping = {1: "spring", 2: "summer", 3: "fall", 4: "winter"}
-    data["season_label"] = data["season"].map(season_mapping)
+    # Mapping numbers to season names
+    season_mapping = {1: 'Winter', 2: 'Spring', 3: 'Summer', 4: 'Fall'}
+    day_data['season'] = day_data['season'].map(season_mapping)
 
-    season_count = data.groupby("season_label")["cnt"].sum().reset_index()
-    fig_season_count = px.bar(season_count, x="season_label",
-                              y="cnt", title="Season-wise Bike Share Count")
-    st.plotly_chart(fig_season_count, use_container_width=True,
-                    height=400, width=600)
+    # Mapping numbers to weather conditions
+    weather_mapping = {1: 'Clear', 2: 'Mist + Cloudy', 3: 'Light Snow', 4: 'Heavy Rain'}
+    day_data['weathersit'] = day_data['weathersit'].map(weather_mapping)
+
+    # Grouping data by season and weather situation
+    season_weather_count = day_data.groupby(['season', 'weathersit'])['cnt'].mean().reset_index()
+
+    # Create the bar chart
+    fig_season_weather_count = px.bar(
+        season_weather_count,
+        x='season',
+        y='cnt',
+        color='weathersit',
+        barmode='group',
+        title='Daily Bike Rentals by Season and Weather Condition',
+        labels={'cnt': 'Average Daily Rentals', 'season': 'Season', 'weathersit': 'Weather Condition'}
+    )
+
+    # Update layout for the chart
+    fig_season_weather_count.update_layout(
+        xaxis_title='Season',
+        yaxis_title='Average Daily Rentals',
+        legend_title='Weather Condition',
+        legend=dict(
+            orientation='h',
+            yanchor='bottom',
+            y=1.02,
+            xanchor='right',
+            x=1
+        )
+    )
+
+    # Show the plot
+    st.plotly_chart(fig_season_weather_count)
 
 with col2:
-    # Weather situation-wise bike share count
-    # st.subheader("Weather Situation-wise Bike Share Count")
-
-    weather_count = data.groupby("weathersit")["cnt"].sum().reset_index()
-    fig_weather_count = px.bar(weather_count, x="weathersit",
-                               y="cnt", title="Weather Situation-wise Bike Share Count")
-    # Mengatur tinggi dan lebar gambar
-    st.plotly_chart(fig_weather_count, use_container_width=True,height=400, width=800)
+    # Displaying the analysis results
+    st.subheader("Analysis Results")
+    st.markdown("### Percentage Difference in Average Usage")
+    percentage_diff = -3.54
+    st.metric("Weekday vs Weekend", f"{percentage_diff}%")
 
 
-# Hourly bike share count
-# st.subheader("Hourly Bike Share Count")
-hourly_count = data.groupby("hr")["cnt"].sum().reset_index()
-fig_hourly_count = px.line(
-    hourly_count, x="hr", y="cnt", title="Hourly Bike Share Count")
-st.plotly_chart(fig_hourly_count, use_container_width=True,
-                height=400, width=600)
+st.markdown("""
+#### Seasonal Impact
+- **Winter:** Decreased usage due to cold and inclement weather.
+- **Spring:** Significant increase as temperatures rise, indicating a preference for milder weather.
+- **Summer:** Peak usage with the highest daily and hourly rentals, favored by warm and pleasant conditions.
+- **Fall:** Slightly lower than summer, but still high, showing enjoyment of cooler, comfortable weather.
 
-# Humidity vs. Bike Share Count
-# st.subheader("Humidity vs. Bike Share Count")
-fig_humidity_chart = px.scatter(
-    data, x="hum", y="cnt", title="Humidity vs. Bike Share Count")
-st.plotly_chart(fig_humidity_chart)
+#### Weather Condition Impact
+- **Clear Weather:** Highest rentals, showing a preference for predictable, comfortable conditions.
+- **Mist + Cloudy:** Moderate reduction in usage, but not significantly discouraged.
+- **Light Snow:** Notable drop in usage due to safety concerns and discomfort.
+- **Heavy Rain (Hourly):** Drastic decrease, affecting commuting times and casual biking.
 
-# Wind Speed vs. Bike Share Count
-# st.subheader("Wind Speed vs. Bike Share Count")
-fig_wind_speed_chart = px.scatter(
-    data, x="windspeed", y="cnt", title="Wind Speed vs. Bike Share Count")
-st.plotly_chart(fig_wind_speed_chart)
+""")
 
-# Temperature vs. Bike Share Count
-# st.subheader("Temperature vs. Bike Share Count")
-fig_temp_chart = px.scatter(data, x="temp", y="cnt",
-                            title="Temperature vs. Bike Share Count")
-st.plotly_chart(fig_temp_chart, use_container_width=True,
-                height=400, width=800)
+for x in range(1, 5):
+    st.markdown("<br>", unsafe_allow_html=True)
 
-# Show data source and description
-st.sidebar.title("About")
-st.sidebar.info("Dashboard ini menampilkan visualisasi untuk sekumpulan data Bike Share. "
-                "Dataset ini mengandung informasi mengenai penyewaan sepeda berdasarkan berbagai variabel seperti musim, suhu, kelembaban, dan faktor lainnya.")
+# Create columns for centering - left, center, right
+left_col, center_col, right_col = st.columns([1, 5, 1])
+with center_col:
+    # Correlation matrix
+    st.subheader("Correlation Matrix for Weather Conditions and Bike Usage")
+    corr_matrix = day_data[['temp', 'hum', 'windspeed', 'cnt']].corr()
+    fig_corr_matrix = px.imshow(corr_matrix, text_auto=True)
+    st.plotly_chart(fig_corr_matrix)
+    st.markdown("""
+    #### Correlation Matrix Summary
+
+    - **Temperature:** Shows a **strong positive relationship** with bike usage; higher temperatures increase rentals, more so for casual users.
+    - **Humidity:** Exhibits a **weak negative correlation**; as humidity goes up, bike usage slightly drops, affecting casual users more.
+    - **Wind Speed:** Has a **negligible negative impact** on bike usage; a slight decrease as wind speed rises, with casual users being more affected.
+    """)
+
+    for x in range(1,5):
+        st.markdown("<br>", unsafe_allow_html=True)
+
+    # Temperature vs. Total Daily Bike Usage
+    st.subheader("Temperature vs. Total Daily Bike Usage")
+    fig_temp_daily_usage = px.scatter(day_data, x='temp', y='cnt', trendline="ols")
+    st.plotly_chart(fig_temp_daily_usage)
+
+    # Humidity vs. Total Daily Bike Usage
+    st.subheader("Humidity vs. Total Daily Bike Usage")
+    fig_hum_daily_usage = px.scatter(day_data, x='hum', y='cnt', trendline="ols")
+    st.plotly_chart(fig_hum_daily_usage)
+
+    # Wind Speed vs. Total Daily Bike Usage
+    st.subheader("Wind Speed vs. Total Daily Bike Usage")
+    fig_wind_speed_daily_usage = px.scatter(day_data, x='windspeed', y='cnt', trendline="ols")
+    st.plotly_chart(fig_wind_speed_daily_usage)
+
+    st.markdown("""
+    #### Weather Conditions vs. Bike Usage Summary
+
+    - **Temperature:** Strong positive effect; warmer weather boosts rentals significantly.
+    - **Humidity:** Minimal impact; slight decrease in rentals with higher humidity.
+    - **Wind Speed:** Negligible influence; wind conditions do not notably deter bike usage.
+
+    Overall, temperature is the key factor driving bike rentals, while humidity and wind speed have limited effects on user behavior.
+    """)
+
+
