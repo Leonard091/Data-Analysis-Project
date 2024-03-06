@@ -14,7 +14,7 @@ The purpose of this project is to conduct a deep dive into Bike Sharing data, wi
 
 ## Setup environment
 ```
-pip install numpy pandas matplotlib seaborn streamlit babel
+pip install numpy pandas matplotlib seaborn streamlit plotly babel statsmodels
 ```
 
 ## Run steamlit app
