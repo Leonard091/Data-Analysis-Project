@@ -19,7 +19,8 @@ pip install numpy pandas matplotlib seaborn streamlit plotly babel statsmodels
 
 ## Run steamlit app
 ```
-streamlit run dashboard/dashboard.py
+cd Data-Analysis-Project/dashboard/
+streamlit run dashboard.py
 ```
 
 ## Online Dashboard Access
