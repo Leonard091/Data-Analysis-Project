@@ -23,9 +23,6 @@ cd Data-Analysis-Project/dashboard/
 streamlit run dashboard.py
 ```
 
-## Online Dashboard Access
-Visit the [🚲 Bike Sharing Dashboard](https://bike-share-dashboard-yzv77akpswbwazty4y2t5d.streamlit.app/) to access my dashboard online.
-
 
 
 
